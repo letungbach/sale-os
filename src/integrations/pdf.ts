@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { Booking, Lead, TourPackage } from '@/domain/types';
-import { formatCurrency, formatDate } from '@/domain/calculations';
+import { formatCurrency, formatDate, outstandingBalance } from '@/domain/calculations';
 
 export function generateItineraryPdf(
   lead: Lead,
@@ -56,7 +56,7 @@ export function generateItineraryPdf(
     section(locale === 'vi' ? 'Thanh toán' : 'Payment');
     row(locale === 'vi' ? 'Tổng tiền' : 'Total', formatCurrency(booking.totalAmount, booking.currency, locale));
     row(locale === 'vi' ? 'Đã thanh toán' : 'Paid', formatCurrency(booking.amountPaid, booking.currency, locale));
-    row(locale === 'vi' ? 'Còn nợ' : 'Outstanding', formatCurrency(Math.max(0, booking.totalAmount - booking.amountPaid), booking.currency, locale));
+    row(locale === 'vi' ? 'Còn nợ' : 'Outstanding', formatCurrency(outstandingBalance(booking), booking.currency, locale));
     if (booking.balanceDueDate) row(locale === 'vi' ? 'Hạn nợ' : 'Balance due', formatDate(booking.balanceDueDate, locale));
     y += 8;
   }

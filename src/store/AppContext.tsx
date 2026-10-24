@@ -20,6 +20,7 @@ import { agentRepo, bookingRepo, leadRepo, packageRepo, settingsRepo, taskRepo }
 import { isSeeded, seedDemoData } from '@/data/seed';
 import { makeI18n, type I18n } from '@/i18n';
 import { useTheme, type ThemeMode } from '@/theme/useTheme';
+import { round2 } from '@/domain/calculations';
 
 interface AppContextValue {
   loading: boolean;
@@ -260,7 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const b = await bookingRepo.get(bookingId);
       if (!b) return;
-      const newPaid = Math.min(b.totalAmount, b.amountPaid + amount);
+      const newPaid = round2(Math.min(b.totalAmount, b.amountPaid + amount));
       const paymentStatus = newPaid >= b.totalAmount ? 'Paid' : newPaid > 0 ? 'Partial' : 'Unpaid';
       await bookingRepo.update(bookingId, { amountPaid: newPaid, paymentStatus });
       await refresh();

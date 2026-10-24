@@ -1,6 +1,6 @@
 import type { DiscountAudit, TourPackage } from '@/domain/types';
 import { discountAuditRepo } from '@/data/repositories';
-import { grossMarginPct } from '@/domain/calculations';
+import { grossMarginPct, round2 } from '@/domain/calculations';
 
 export interface DiscountRequest {
   originalPrice: number;
@@ -23,9 +23,9 @@ export interface DiscountResult {
 }
 
 export async function applySeasonalDiscount(req: DiscountRequest): Promise<DiscountResult> {
-  const discountAmount = req.originalPrice * (req.discountPercent / 100);
-  const finalPrice = req.originalPrice - discountAmount;
-  const marginPctAfter = req.baseCost > 0 ? ((finalPrice - req.baseCost) / finalPrice) * 100 : 0;
+  const discountAmount = round2(req.originalPrice * (req.discountPercent / 100));
+  const finalPrice = round2(req.originalPrice - discountAmount);
+  const marginPctAfter = req.baseCost > 0 ? round2(((finalPrice - req.baseCost) / finalPrice) * 100) : 0;
 
   if (marginPctAfter < req.marginFloorPercent) {
     return {

@@ -8,17 +8,21 @@ import type {
   TourPackage,
 } from './types';
 
+export function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 export function grossProfit(pkg: TourPackage): number {
-  return pkg.sellingPrice - pkg.baseCost;
+  return round2(pkg.sellingPrice - pkg.baseCost);
 }
 
 export function grossMarginPct(pkg: TourPackage): number {
   if (pkg.sellingPrice <= 0) return 0;
-  return (grossProfit(pkg) / pkg.sellingPrice) * 100;
+  return round2((grossProfit(pkg) / pkg.sellingPrice) * 100);
 }
 
 export function outstandingBalance(booking: Booking): number {
-  return Math.max(0, booking.totalAmount - booking.amountPaid);
+  return round2(Math.max(0, booking.totalAmount - booking.amountPaid));
 }
 
 export function revenueAttainment(actual: number, target: number): number {
@@ -27,19 +31,19 @@ export function revenueAttainment(actual: number, target: number): number {
 }
 
 export function revenueGap(target: number, actual: number): number {
-  return Math.max(0, target - actual);
+  return round2(Math.max(0, target - actual));
 }
 
 export function requiredDailyPace(gap: number, remainingDays: number): number {
   if (remainingDays <= 0) return gap > 0 ? Infinity : 0;
-  return gap / remainingDays;
+  return round2(gap / remainingDays);
 }
 
 export function earnedCommission(
   commissionableRevenue: number,
   rate: number,
 ): number {
-  return commissionableRevenue * rate;
+  return round2(commissionableRevenue * rate);
 }
 
 export function quoteConversionRate(won: number, eligible: number): number {
@@ -84,7 +88,7 @@ export function summarizeRevenue(
 ): RevenueSummary {
   const recognized = bookings.filter((b) => b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed');
 
-  const confirmedRevenue = recognized.reduce((sum, b) => {
+  const confirmedRevenue = round2(recognized.reduce((sum, b) => {
     if (settings.revenueRecognition === 'on_full_payment') {
       return b.paymentStatus === 'Paid' ? sum + b.totalAmount : sum;
     }
@@ -93,27 +97,27 @@ export function summarizeRevenue(
     }
     // on_confirmation
     return sum + b.totalAmount;
-  }, 0);
+  }, 0));
 
-  const cashCollected = recognized.reduce((sum, b) => sum + b.amountPaid, 0);
+  const cashCollected = round2(recognized.reduce((sum, b) => sum + b.amountPaid, 0));
   const commissionableRevenue =
-    settings.revenueRecognition === 'on_deposit' ? cashCollected : confirmedRevenue;
+    round2(settings.revenueRecognition === 'on_deposit' ? cashCollected : confirmedRevenue);
 
   const earnedCommissionValue = earnedCommission(commissionableRevenue, agent.commissionRate);
-  const estimatedCommissionAtTarget = agent.monthlyRevenueTarget * agent.commissionRate;
+  const estimatedCommissionAtTarget = round2(agent.monthlyRevenueTarget * agent.commissionRate);
 
   const qualifiedLeads = leads.filter((l) => l.stage !== 'Lost').length;
   const quotesSent = leads.filter((l) =>
     ['Quote Sent', 'Deposit Paid', 'Closed Won'].includes(l.stage),
   ).length;
   const confirmedBookings = recognized.length;
-  const quotedValue = leads
+  const quotedValue = round2(leads
     .filter((l) => ['Quote Sent', 'Deposit Paid', 'Closed Won'].includes(l.stage))
-    .reduce((sum, l) => sum + l.budget, 0);
+    .reduce((sum, l) => sum + l.budget, 0));
 
-  const weightedForecast = leads
+  const weightedForecast = round2(leads
     .filter((l) => ['Inquiry', 'Quote Sent', 'Deposit Paid'].includes(l.stage))
-    .reduce((sum, l) => sum + l.budget * (l.priorityScore / 100), 0);
+    .reduce((sum, l) => sum + l.budget * (l.priorityScore / 100), 0));
 
   const eligible = leads.filter((l) => l.stage !== 'Inquiry').length;
   const won = leads.filter((l) => l.stage === 'Closed Won').length;

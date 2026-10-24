@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { useApp } from '@/store/AppContext';
-import { summarizeRevenue, formatCurrency, formatDateTime, daysUntil, hoursUntil, grossMarginPct } from '@/domain/calculations';
+import { summarizeRevenue, formatCurrency, formatDateTime, daysUntil, hoursUntil, grossMarginPct, round2 } from '@/domain/calculations';
 import { rankTasks, streakInfo, attachContext, type ScoredTask } from '@/domain/scoring';
 import { Card, Badge, EmptyState } from '@/components/Form';
 import { Button } from '@/components/Button';
@@ -67,7 +67,7 @@ export function DashboardPage({ onNavigate, onOpenTask }: Props) {
     };
     (['Inquiry', 'Quote Sent', 'Deposit Paid', 'Closed Won', 'Lost'] as const).forEach((s) => {
       const inStage = leads.filter((l) => l.stage === s);
-      stages.push({ stage: stageLabels[s], count: inStage.length, value: inStage.reduce((a, b) => a + b.budget, 0) });
+      stages.push({ stage: stageLabels[s], count: inStage.length, value: round2(inStage.reduce((a, b) => a + b.budget, 0)) });
     });
     return stages;
   }, [leads, t]);
