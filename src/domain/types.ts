@@ -48,6 +48,7 @@ export interface Lead {
   source?: string;
   nextActionAt?: string;
   notes?: string;
+  closedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

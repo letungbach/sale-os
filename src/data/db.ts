@@ -29,6 +29,23 @@ export class SalesOSDatabase extends Dexie {
       settings: 'id, agentId',
       discountAudits: 'id, bookingId, leadId, createdAt',
     });
+    this.version(2)
+      .stores({
+        agents: 'agentId, name, active',
+        leads: 'leadId, agentId, stage, destination, priorityScore, nextActionAt, createdAt, closedAt',
+        packages: 'packageId, destination, availabilityStatus, supplierCutoffAt',
+        bookings: 'bookingId, leadId, packageId, bookingStatus, paymentStatus, currency, createdAt',
+        tasks: 'taskId, agentId, leadId, bookingId, urgencyLevel, status, dueAt, createdAt',
+        settings: 'id, agentId',
+        discountAudits: 'id, bookingId, leadId, createdAt',
+      })
+      .upgrade(async (tx) => {
+        await tx.table('leads').toCollection().modify((lead) => {
+          if (lead.stage === 'Closed Won' && !lead.closedAt) {
+            lead.closedAt = lead.updatedAt;
+          }
+        });
+      });
   }
 }
 

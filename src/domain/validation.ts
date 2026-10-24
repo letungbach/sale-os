@@ -33,6 +33,7 @@ export const leadSchema = z.object({
   source: z.string().optional(),
   nextActionAt: isoString.optional(),
   notes: z.string().optional(),
+  closedAt: isoString.optional(),
   createdAt: isoString,
   updatedAt: isoString,
 });

@@ -73,7 +73,17 @@ export const leadRepo = {
   async update(id: string, patch: Partial<Lead>): Promise<Lead | undefined> {
     const existing = await db.leads.get(id);
     if (!existing) return undefined;
-    const updated: Lead = { ...existing, ...stripUndefined(patch), leadId: id, updatedAt: nowISO() };
+    const cleanPatch = stripUndefined(patch);
+    delete cleanPatch.closedAt;
+    const transitionedToWon = cleanPatch.stage === 'Closed Won' && existing.stage !== 'Closed Won';
+    const closedAt = existing.closedAt ?? (transitionedToWon ? nowISO() : undefined);
+    const updated: Lead = {
+      ...existing,
+      ...cleanPatch,
+      ...(closedAt ? { closedAt } : {}),
+      leadId: id,
+      updatedAt: nowISO(),
+    };
     await db.leads.put(updated);
     return updated;
   },

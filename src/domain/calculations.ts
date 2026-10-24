@@ -133,7 +133,7 @@ export function summarizeRevenue(
   const daysToClose: number[] = [];
   for (const l of closedLeads) {
     const created = new Date(l.createdAt).getTime();
-    const closed = new Date(l.updatedAt).getTime();
+    const closed = new Date(l.closedAt ?? l.updatedAt).getTime();
     const days = (closed - created) / (1000 * 60 * 60 * 24);
     if (days >= 0) daysToClose.push(days);
   }
