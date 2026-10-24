@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-const isoString = z.string().min(1);
+const isoString = z.string().min(1).refine(
+  (value) => !isNaN(new Date(value).getTime()),
+  { message: 'Invalid ISO date string' },
+);
 const idString = z.string().min(1);
 
 export const agentSchema = z.object({
