@@ -9,6 +9,14 @@ import type {
   TourPackage,
 } from '@/domain/types';
 
+function stripUndefined<T extends object>(patch: Partial<T>): Partial<T> {
+  const cleanPatch: Partial<T> = {};
+  for (const [key, value] of Object.entries(patch)) {
+    if (value !== undefined) Object.assign(cleanPatch, { [key]: value });
+  }
+  return cleanPatch;
+}
+
 export const agentRepo = {
   async get(): Promise<Agent | undefined> {
     const all = await db.agents.toArray();
@@ -65,7 +73,7 @@ export const leadRepo = {
   async update(id: string, patch: Partial<Lead>): Promise<Lead | undefined> {
     const existing = await db.leads.get(id);
     if (!existing) return undefined;
-    const updated: Lead = { ...existing, ...patch, leadId: id, updatedAt: nowISO() };
+    const updated: Lead = { ...existing, ...stripUndefined(patch), leadId: id, updatedAt: nowISO() };
     await db.leads.put(updated);
     return updated;
   },
@@ -90,7 +98,7 @@ export const packageRepo = {
   async update(id: string, patch: Partial<TourPackage>): Promise<TourPackage | undefined> {
     const existing = await db.packages.get(id);
     if (!existing) return undefined;
-    const updated: TourPackage = { ...existing, ...patch, packageId: id, updatedAt: nowISO() };
+    const updated: TourPackage = { ...existing, ...stripUndefined(patch), packageId: id, updatedAt: nowISO() };
     await db.packages.put(updated);
     return updated;
   },
@@ -115,7 +123,7 @@ export const bookingRepo = {
   async update(id: string, patch: Partial<Booking>): Promise<Booking | undefined> {
     const existing = await db.bookings.get(id);
     if (!existing) return undefined;
-    const updated: Booking = { ...existing, ...patch, bookingId: id, updatedAt: nowISO() };
+    const updated: Booking = { ...existing, ...stripUndefined(patch), bookingId: id, updatedAt: nowISO() };
     await db.bookings.put(updated);
     return updated;
   },
@@ -140,7 +148,7 @@ export const taskRepo = {
   async update(id: string, patch: Partial<GsdTask>): Promise<GsdTask | undefined> {
     const existing = await db.tasks.get(id);
     if (!existing) return undefined;
-    const updated: GsdTask = { ...existing, ...patch, taskId: id, updatedAt: nowISO() };
+    const updated: GsdTask = { ...existing, ...stripUndefined(patch), taskId: id, updatedAt: nowISO() };
     await db.tasks.put(updated);
     return updated;
   },
