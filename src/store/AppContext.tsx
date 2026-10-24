@@ -23,6 +23,9 @@ import { useTheme, type ThemeMode } from '@/theme/useTheme';
 
 interface AppContextValue {
   loading: boolean;
+  lastError: string | null;
+  clearError: () => void;
+  retryInitialization: () => Promise<void>;
   isDemo: boolean;
   agent: Agent | undefined;
   settings: Settings | undefined;
@@ -55,6 +58,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [agent, setAgentState] = useState<Agent | undefined>();
   const [settings, setSettingsState] = useState<Settings | undefined>();
@@ -87,14 +91,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsDemo(a?.agentId === 'agent_demo_01');
   }, []);
 
-  useEffect(() => {
-    (async () => {
+  const retryInitialization = useCallback(async () => {
+    setLoading(true);
+    setLastError(null);
+    try {
       const seeded = await isSeeded();
       if (!seeded) await seedDemoData(false);
       await refresh();
+    } catch (e) {
+      console.error('[AppContext] init failed', e);
+      setLastError(e instanceof Error ? e.message : 'Initialization failed');
+    } finally {
       setLoading(false);
-    })();
+    }
   }, [refresh]);
+
+  useEffect(() => {
+    void retryInitialization();
+  }, [retryInitialization]);
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -131,77 +145,133 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [agent]);
 
   const saveLead: AppContextValue['saveLead'] = useCallback(async (l) => {
-    if (l.leadId) {
-      await leadRepo.update(l.leadId, l);
-    } else {
-      const { leadId: _omit, ...rest } = l;
-      void _omit;
-      await leadRepo.create(rest);
+    try {
+      if (l.leadId) {
+        await leadRepo.update(l.leadId, l);
+      } else {
+        const { leadId: _omit, ...rest } = l;
+        void _omit;
+        await leadRepo.create(rest);
+      }
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] saveLead failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
     }
-    setLeads(await leadRepo.all());
-  }, []);
+  }, [i18n, refresh]);
 
   const deleteLead = useCallback(async (id: string) => {
-    await leadRepo.remove(id);
-    setLeads(await leadRepo.all());
-  }, []);
+    try {
+      await leadRepo.remove(id);
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] deleteLead failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
+    }
+  }, [i18n, refresh]);
 
   const savePackage: AppContextValue['savePackage'] = useCallback(async (p) => {
-    if (p.packageId) {
-      await packageRepo.update(p.packageId, p);
-    } else {
-      const { packageId: _omit, ...rest } = p;
-      void _omit;
-      await packageRepo.create(rest);
+    try {
+      if (p.packageId) {
+        await packageRepo.update(p.packageId, p);
+      } else {
+        const { packageId: _omit, ...rest } = p;
+        void _omit;
+        await packageRepo.create(rest);
+      }
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] savePackage failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
     }
-    setPackages(await packageRepo.all());
-  }, []);
+  }, [i18n, refresh]);
 
   const deletePackage = useCallback(async (id: string) => {
-    await packageRepo.remove(id);
-    setPackages(await packageRepo.all());
-  }, []);
+    try {
+      await packageRepo.remove(id);
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] deletePackage failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
+    }
+  }, [i18n, refresh]);
 
   const saveBooking: AppContextValue['saveBooking'] = useCallback(async (b) => {
-    if (b.bookingId) {
-      await bookingRepo.update(b.bookingId, b);
-    } else {
-      const { bookingId: _omit, ...rest } = b;
-      void _omit;
-      await bookingRepo.create(rest);
+    try {
+      if (b.bookingId) {
+        await bookingRepo.update(b.bookingId, b);
+      } else {
+        const { bookingId: _omit, ...rest } = b;
+        void _omit;
+        await bookingRepo.create(rest);
+      }
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] saveBooking failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
     }
-    setBookings(await bookingRepo.all());
-  }, []);
+  }, [i18n, refresh]);
 
   const deleteBooking = useCallback(async (id: string) => {
-    await bookingRepo.remove(id);
-    setBookings(await bookingRepo.all());
-  }, []);
+    try {
+      await bookingRepo.remove(id);
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] deleteBooking failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
+    }
+  }, [i18n, refresh]);
 
   const saveTask: AppContextValue['saveTask'] = useCallback(async (t) => {
-    if (t.taskId) {
-      await taskRepo.update(t.taskId, t);
-    } else {
-      const { taskId: _omit, ...rest } = t;
-      void _omit;
-      await taskRepo.create(rest);
+    try {
+      if (t.taskId) {
+        await taskRepo.update(t.taskId, t);
+      } else {
+        const { taskId: _omit, ...rest } = t;
+        void _omit;
+        await taskRepo.create(rest);
+      }
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] saveTask failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
     }
-    setTasks(await taskRepo.all());
-  }, []);
+  }, [i18n, refresh]);
 
   const deleteTask = useCallback(async (id: string) => {
-    await taskRepo.remove(id);
-    setTasks(await taskRepo.all());
-  }, []);
+    try {
+      await taskRepo.remove(id);
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] deleteTask failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
+    }
+  }, [i18n, refresh]);
 
   const recordPayment = useCallback(async (bookingId: string, amount: number) => {
-    const b = await bookingRepo.get(bookingId);
-    if (!b) return;
-    const newPaid = Math.min(b.totalAmount, b.amountPaid + amount);
-    const paymentStatus = newPaid >= b.totalAmount ? 'Paid' : newPaid > 0 ? 'Partial' : 'Unpaid';
-    await bookingRepo.update(bookingId, { amountPaid: newPaid, paymentStatus });
-    setBookings(await bookingRepo.all());
-  }, []);
+    try {
+      const b = await bookingRepo.get(bookingId);
+      if (!b) return;
+      const newPaid = Math.min(b.totalAmount, b.amountPaid + amount);
+      const paymentStatus = newPaid >= b.totalAmount ? 'Paid' : newPaid > 0 ? 'Partial' : 'Unpaid';
+      await bookingRepo.update(bookingId, { amountPaid: newPaid, paymentStatus });
+      await refresh();
+    } catch (e) {
+      console.error('[AppContext] recordPayment failed', e);
+      setLastError(e instanceof Error ? e.message : i18n.t('app.operationFailed'));
+      throw e;
+    }
+  }, [i18n, refresh]);
+
+  const clearError = useCallback(() => setLastError(null), []);
 
   // Keep theme synced with settings when settings change
   useEffect(() => {
@@ -213,6 +283,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppContextValue = {
     loading,
+    lastError,
+    clearError,
+    retryInitialization,
     isDemo,
     agent,
     settings,
