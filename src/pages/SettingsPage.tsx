@@ -8,6 +8,7 @@ import { createEngine } from '@/ai/decisionEngine';
 import { webmcp } from '@/webmcp/adapter';
 import { Badge, Card, EmptyState, Field, Input, Select } from '@/components/Form';
 import { Button } from '@/components/Button';
+import { ConfirmDialog } from '@/components/Modal';
 
 const CURRENCIES: Currency[] = ['VND', 'USD', 'KRW', 'JPY'];
 
@@ -16,6 +17,7 @@ export function SettingsPage() {
   const t = i18n.t;
   const fileRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const detEngine = createEngine('deterministic');
   const onnxEngine = createEngine('onnx');
@@ -112,12 +114,22 @@ export function SettingsPage() {
             <Button variant="outline" onClick={doExport}><Download size={14} /> {t('set.exportJson')}</Button>
             <Button variant="outline" onClick={doExportCsv}><Download size={14} /> {t('set.exportCsv')}</Button>
             <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={14} /> {t('set.importJson')}</Button>
-            <Button variant="danger" onClick={doReset}><RotateCcw size={14} /> {t('set.resetDemo')}</Button>
+            <Button variant="danger" onClick={() => setConfirmReset(true)}><RotateCcw size={14} /> {t('set.resetDemo')}</Button>
             <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) doImport(f); e.target.value = ''; }} />
           </div>
           <p className="text-xs text-slate-400">{t('set.privacyNote')}</p>
           <p className="text-xs text-slate-400">{t('set.syncNote')}</p>
         </Card>
+        <ConfirmDialog
+          open={confirmReset}
+          title={t('set.resetDemo')}
+          message={t('set.resetWarning')}
+          confirmLabel={t('common.confirm')}
+          cancelLabel={t('common.cancel')}
+          danger
+          onConfirm={async () => { await doReset(); setConfirmReset(false); }}
+          onCancel={() => setConfirmReset(false)}
+        />
       </section>
 
       <section>
