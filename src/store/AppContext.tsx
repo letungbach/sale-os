@@ -135,8 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updated: Settings = { ...settings, ...patch, updatedAt: new Date().toISOString() };
     await settingsRepo.save(updated);
     setSettingsState(updated);
-    if (patch.theme) setThemeMode(patch.theme);
-  }, [settings, setThemeMode]);
+  }, [settings]);
 
   const setAgent = useCallback(async (patch: Partial<Agent>) => {
     if (!agent) return;
@@ -274,15 +273,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setLastError(null), []);
 
-  // Keep theme synced with settings when settings change
-  useEffect(() => {
-    if (settings?.theme && settings.theme !== themeMode) {
-      setThemeMode(settings.theme);
+  const setThemeModeCtx = useCallback((m: ThemeMode) => {
+    setThemeMode(m);
+    if (settings) {
+      void setSettings({ theme: m });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.theme]);
+  }, [setSettings, setThemeMode, settings]);
 
-  const value: AppContextValue = {
+  const value = useMemo<AppContextValue>(() => ({
     loading,
     lastError,
     clearError,
@@ -297,10 +295,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     i18n,
     themeMode,
     effectiveTheme,
-    setThemeMode: (m: ThemeMode) => {
-      setThemeMode(m);
-      if (settings) setSettings({ theme: m });
-    },
+    setThemeMode: setThemeModeCtx,
     setLanguage,
     setSettings,
     setAgent,
@@ -315,9 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteTask,
     recordPayment,
     online,
-  };
-
-  void (settings?.reportingCurrency as Currency | undefined);
+  }), [agent, bookings, clearError, deleteBooking, deleteLead, deletePackage, deleteTask, effectiveTheme, i18n, isDemo, lastError, leads, loading, online, packages, recordPayment, refresh, retryInitialization, saveBooking, saveLead, savePackage, saveTask, setAgent, setLanguage, setSettings, setThemeModeCtx, tasks, themeMode, settings]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

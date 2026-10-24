@@ -19,6 +19,7 @@ export function SettingsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [pendingImport, setPendingImport] = useState<File | null>(null);
+  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const detEngine = createEngine('deterministic');
   const onnxEngine = createEngine('onnx');
@@ -54,6 +55,18 @@ export function SettingsPage() {
       else flash(`${t('set.importFailed')} ${res.errors.join('; ')}`);
     } catch { flash(t('set.importFailed')); }
   };
+
+  const isDirty =
+    agent.name !== agent.name ||
+    settings.language !== settings.language ||
+    settings.theme !== settings.theme ||
+    settings.reportingCurrency !== settings.reportingCurrency ||
+    settings.sellingDaysTotal !== settings.sellingDaysTotal ||
+    settings.sellingDaysElapsed !== settings.sellingDaysElapsed ||
+    settings.revenueRecognition !== settings.revenueRecognition ||
+    settings.marginFloorPercent !== settings.marginFloorPercent ||
+    settings.p0Threshold !== settings.p0Threshold ||
+    settings.p1Threshold !== settings.p1Threshold;
 
   const doReset = async () => {
     await resetDemoData();

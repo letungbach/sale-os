@@ -16,6 +16,8 @@ const STAGES: { key: LeadStage; icon: typeof Users; color: 'slate' | 'sky' | 'am
 export function PipelinePage() {
   const { leads, i18n } = useApp();
   const t = i18n.t;
+  const currencies = new Set(leads.map((l) => l.currency));
+  const isMixed = currencies.size > 1;
 
   const grouped = useMemo(() => {
     const map: Record<LeadStage, Lead[]> = { Inquiry: [], 'Quote Sent': [], 'Deposit Paid': [], 'Closed Won': [], Lost: [] };
@@ -48,6 +50,11 @@ export function PipelinePage() {
               <span>{t('lead.closedWon')}: <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(total.won, currency, i18n.lang)}</strong></span>
             </div>
           ))}
+          {isMixed && (
+            <span className="ml-2 text-amber-500 text-xs" title={t('pipeline.mixedCurrencyWarning')}>
+              ⚠ {t('pipeline.mixedCurrency')}
+            </span>
+          )}
         </div>
       </div>
 
