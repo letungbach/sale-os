@@ -18,6 +18,7 @@ export function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [pendingImport, setPendingImport] = useState<File | null>(null);
 
   const detEngine = createEngine('deterministic');
   const onnxEngine = createEngine('onnx');
@@ -41,6 +42,12 @@ export function SettingsPage() {
 
   const doImport = async (file: File) => {
     try {
+      const backup = await exportData();
+      downloadFile(
+        `sale-os-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(backup, null, 2),
+      );
+
       const text = await file.text();
       const res = await importData(JSON.parse(text), { replace: true });
       if (res.ok) { flash(t('set.importSuccess')); await refresh(); }
@@ -115,7 +122,17 @@ export function SettingsPage() {
             <Button variant="outline" onClick={doExportCsv}><Download size={14} /> {t('set.exportCsv')}</Button>
             <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={14} /> {t('set.importJson')}</Button>
             <Button variant="danger" onClick={() => setConfirmReset(true)}><RotateCcw size={14} /> {t('set.resetDemo')}</Button>
-            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) doImport(f); e.target.value = ''; }} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setPendingImport(f);
+                e.target.value = '';
+              }}
+            />
           </div>
           <p className="text-xs text-slate-400">{t('set.privacyNote')}</p>
           <p className="text-xs text-slate-400">{t('set.syncNote')}</p>
@@ -129,6 +146,21 @@ export function SettingsPage() {
           danger
           onConfirm={async () => { await doReset(); setConfirmReset(false); }}
           onCancel={() => setConfirmReset(false)}
+        />
+        <ConfirmDialog
+          open={!!pendingImport}
+          title={t('set.importTitle')}
+          message={t('set.importWarning')}
+          confirmLabel={t('set.importConfirm')}
+          cancelLabel={t('common.cancel')}
+          danger
+          onConfirm={async () => {
+            if (pendingImport) {
+              await doImport(pendingImport);
+              setPendingImport(null);
+            }
+          }}
+          onCancel={() => setPendingImport(null)}
         />
       </section>
 
