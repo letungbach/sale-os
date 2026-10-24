@@ -250,20 +250,27 @@ export function rankTasks(
 
 export function streakInfo(tasks: GsdTask[], now: Date = new Date()): { currentStreak: number; completedToday: number } {
   const completed = tasks.filter((t) => t.status === 'Completed' && t.completedAt);
-  const todayStr = now.toISOString().slice(0, 10);
+  const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+  const todayStr = dateFormatter.format(now);
   const completedToday = completed.filter(
-    (t) => t.completedAt!.slice(0, 10) === todayStr,
+    (t) => dateFormatter.format(new Date(t.completedAt!)) === todayStr,
   ).length;
 
   // Count consecutive days with at least one completion, ending today or yesterday
   let currentStreak = 0;
-  const dayMap = new Set(completed.map((t) => t.completedAt!.slice(0, 10)));
-  const cursor = new Date(todayStr);
+  const dayMap = new Set(completed.map((t) => dateFormatter.format(new Date(t.completedAt!))));
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const cursor = new Date(year, month - 1, day, 12);
   // allow streak to count from today backwards; if today has none, start from yesterday
   if (!dayMap.has(todayStr)) {
     cursor.setDate(cursor.getDate() - 1);
   }
-  while (dayMap.has(cursor.toISOString().slice(0, 10))) {
+  while (dayMap.has(dateFormatter.format(cursor))) {
     currentStreak += 1;
     cursor.setDate(cursor.getDate() - 1);
   }

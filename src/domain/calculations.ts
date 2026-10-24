@@ -222,5 +222,6 @@ export function hoursUntil(value?: string, now: Date = new Date()): number | nul
   const target = new Date(value).getTime();
   if (isNaN(target)) return null;
   const diff = target - now.getTime();
+  if (diff < 0) return Math.floor(diff / (1000 * 60 * 60));
   return Math.ceil(diff / (1000 * 60 * 60));
 }

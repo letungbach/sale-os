@@ -128,7 +128,7 @@ export function BookingsPage() {
           onConfirm={async (amount) => {
             await recordPayment(paymentBooking.bookingId, amount);
             setPaymentBooking(null);
-            flash(t('act.paymentLinkSaved'));
+            flash(t('act.paymentRecorded'));
           }}
         />
       )}
@@ -172,13 +172,12 @@ function BookingFormModal({ booking, onClose, onSave }: { booking: Booking | nul
       depositAmount: Number(form.depositAmount),
       amountPaid: Number(form.amountPaid),
       balanceDueDate: toISO(form.balanceDueDate),
-      paymentStatus: form.paymentStatus,
+      paymentStatus: computed,
       bookingStatus: form.bookingStatus,
       currency: form.currency,
       confirmedAt: toISO(form.confirmedAt),
       paymentLink,
     });
-    void computed;
   };
 
   return (

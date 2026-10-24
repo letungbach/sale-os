@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Users, FileText, Wallet, Trophy, X } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
-import type { Lead, LeadStage } from '@/domain/types';
-import { formatCurrency, formatDate, daysUntil } from '@/domain/calculations';
+import type { Currency, Lead, LeadStage } from '@/domain/types';
+import { formatCurrency, formatDate, daysUntil, round2 } from '@/domain/calculations';
 import { Badge, Card, EmptyState } from '@/components/Form';
 
 const STAGES: { key: LeadStage; icon: typeof Users; color: 'slate' | 'sky' | 'amber' | 'emerald' | 'rose' }[] = [
@@ -23,26 +23,41 @@ export function PipelinePage() {
     return map;
   }, [leads]);
 
-  const totals = useMemo(() => {
-    const value = leads.filter((l) => l.stage !== 'Lost').reduce((s, l) => s + l.budget, 0);
-    const won = leads.filter((l) => l.stage === 'Closed Won').reduce((s, l) => s + l.budget, 0);
-    return { value, won, count: leads.length };
+  const totalsByCurrency = useMemo(() => {
+    const map = new Map<Currency, { value: number; won: number }>();
+    for (const lead of leads) {
+      const total = map.get(lead.currency) ?? { value: 0, won: 0 };
+      if (lead.stage !== 'Lost') total.value += lead.budget;
+      if (lead.stage === 'Closed Won') total.won += lead.budget;
+      map.set(lead.currency, total);
+    }
+    return Array.from(map.entries()).map(([currency, total]) => [
+      currency,
+      { value: round2(total.value), won: round2(total.won) },
+    ] as const);
   }, [leads]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('dash.salesPipeline')}</h2>
-        <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400">
-          <span>{t('common.value')}: <strong className="text-slate-900 dark:text-white">{formatCurrency(totals.value, leads[0]?.currency ?? 'USD', i18n.lang)}</strong></span>
-          <span>{t('lead.closedWon')}: <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.won, leads[0]?.currency ?? 'USD', i18n.lang)}</strong></span>
+        <div className="flex flex-col items-end gap-1 text-xs text-slate-500 dark:text-slate-400">
+          {totalsByCurrency.map(([currency, total]) => (
+            <div key={currency} className="flex gap-4">
+              <span>{t('common.value')} ({currency}): <strong className="text-slate-900 dark:text-white">{formatCurrency(total.value, currency, i18n.lang)}</strong></span>
+              <span>{t('lead.closedWon')}: <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(total.won, currency, i18n.lang)}</strong></span>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {STAGES.map(({ key, icon: Icon, color }) => {
           const items = grouped[key];
-          const stageValue = items.reduce((s, l) => s + l.budget, 0);
+          const stageValues = new Map<Currency, number>();
+          for (const lead of items) {
+            stageValues.set(lead.currency, (stageValues.get(lead.currency) ?? 0) + lead.budget);
+          }
           return (
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-1">
@@ -52,7 +67,11 @@ export function PipelinePage() {
                 </span>
                 <Badge color={color}>{items.length}</Badge>
               </div>
-              <p className="text-xs text-slate-400 px-1">{formatCurrency(stageValue, items[0]?.currency ?? 'USD', i18n.lang)}</p>
+              {Array.from(stageValues, ([currency, value]) => (
+                <p key={currency} className="text-xs text-slate-400 px-1">
+                  {formatCurrency(round2(value), currency, i18n.lang)}
+                </p>
+              ))}
 
               <div className="space-y-2 min-h-[100px]">
                 {items.length === 0 ? (
