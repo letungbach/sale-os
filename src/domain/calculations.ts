@@ -99,7 +99,7 @@ export function summarizeRevenue(
   const commissionableRevenue =
     settings.revenueRecognition === 'on_deposit' ? cashCollected : confirmedRevenue;
 
-  const earnedCommission = earnedCommission(commissionableRevenue, agent.commissionRate);
+  const earnedCommissionValue = earnedCommission(commissionableRevenue, agent.commissionRate);
   const estimatedCommissionAtTarget = agent.monthlyRevenueTarget * agent.commissionRate;
 
   const qualifiedLeads = leads.filter((l) => l.stage !== 'Lost').length;
@@ -146,7 +146,7 @@ export function summarizeRevenue(
     forecastValue: weightedForecast,
     cashCollected,
     commissionableRevenue,
-    earnedCommission,
+    earnedCommission: earnedCommissionValue,
     estimatedCommissionAtTarget,
     qualifiedLeads,
     quotesSent,

@@ -4,11 +4,11 @@ import {
   Clock, ArrowRight, ChevronRight, Zap, Users,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { useApp } from '@/store/AppContext';
 import { summarizeRevenue, formatCurrency, formatDateTime, daysUntil, hoursUntil, grossMarginPct } from '@/domain/calculations';
-import { rankTasks, streakInfo, priorityGroup, attachContext, type ScoredTask } from '@/domain/scoring';
+import { rankTasks, streakInfo, attachContext, type ScoredTask } from '@/domain/scoring';
 import { Card, Badge, EmptyState } from '@/components/Form';
 import { Button } from '@/components/Button';
 import type { UrgencyLevel } from '@/domain/types';
@@ -34,7 +34,6 @@ export function DashboardPage({ onNavigate, onOpenTask }: Props) {
     return rankTasks(tasks, { p0Threshold: settings.p0Threshold, p1Threshold: settings.p1Threshold });
   }, [tasks, settings]);
 
-  const groups = useMemo(() => priorityGroup(scored), [scored]);
   const { currentStreak, completedToday } = useMemo(() => streakInfo(tasks), [tasks]);
 
   const completionRate = useMemo(() => {
@@ -231,7 +230,7 @@ export function DashboardPage({ onNavigate, onOpenTask }: Props) {
                   <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
                   <Tooltip
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                    formatter={(v: number) => [formatCurrency(v, currency, i18n.lang), t('common.value')]}
+                    formatter={(v) => [formatCurrency(Number(v), currency, i18n.lang), t('common.value')] as [string, string]}
                   />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                     {pipelineData.map((_, i) => <Cell key={i} fill={packageColors[i % packageColors.length]} />)}

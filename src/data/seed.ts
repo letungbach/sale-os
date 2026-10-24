@@ -7,7 +7,7 @@ import type {
   Settings,
   TourPackage,
 } from '@/domain/types';
-import { db, newId, nowISO } from './db';
+import { db, nowISO } from './db';
 
 const DEMO_AGENT_ID = 'agent_demo_01';
 const ISO = nowISO;
