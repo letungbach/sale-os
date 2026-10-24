@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppProvider, useApp } from '@/store/AppContext';
 import { AppShell, type PageKey } from '@/components/AppShell';
 import { EmptyState } from '@/components/Form';
@@ -57,8 +58,10 @@ function RoutedApp() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <RoutedApp />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <RoutedApp />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
