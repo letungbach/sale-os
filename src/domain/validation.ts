@@ -61,7 +61,10 @@ export const bookingSchema = z.object({
   bookingStatus: z.enum(['Draft', 'Confirmed', 'Cancelled', 'Completed']),
   currency: z.enum(['VND', 'USD', 'KRW', 'JPY']),
   confirmedAt: isoString.optional(),
-  paymentLink: z.string().optional(),
+  paymentLink: z.string().url()
+    .refine((url) => /^https?:\/\//i.test(url), { message: 'Must be an HTTP or HTTPS URL' })
+    .optional()
+    .or(z.literal('')),
   createdAt: isoString,
   updatedAt: isoString,
 });

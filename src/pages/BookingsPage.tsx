@@ -11,6 +11,12 @@ import { Modal, ConfirmDialog } from '@/components/Modal';
 const BOOKING_STATUSES: BookingStatus[] = ['Draft', 'Confirmed', 'Cancelled', 'Completed'];
 const PAYMENT_STATUSES: PaymentStatus[] = ['Unpaid', 'Partial', 'Paid', 'Refunded'];
 const CURRENCIES: Currency[] = ['VND', 'USD', 'KRW', 'JPY'];
+const SAFE_URL = /^https?:\/\//i;
+
+function safeHref(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  return SAFE_URL.test(url) ? url : undefined;
+}
 
 const bookingColors: Record<BookingStatus, 'slate' | 'sky' | 'rose' | 'emerald'> = {
   Draft: 'slate',
@@ -146,9 +152,16 @@ function BookingFormModal({ booking, onClose, onSave }: { booking: Booking | nul
     confirmedAt: booking?.confirmedAt?.slice(0, 10) ?? '',
     paymentLink: booking?.paymentLink ?? '',
   });
+  const [paymentLinkError, setPaymentLinkError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!form.leadId) return;
+    const paymentLink = safeHref(form.paymentLink);
+    if (form.paymentLink && !paymentLink) {
+      setPaymentLinkError(t('book.invalidPaymentLink'));
+      return;
+    }
+    setPaymentLinkError(null);
     const toISO = (v: string) => v ? new Date(v).toISOString() : undefined;
     const computed = computePaymentStatus(Number(form.totalAmount), Number(form.amountPaid));
     await onSave({
@@ -163,7 +176,7 @@ function BookingFormModal({ booking, onClose, onSave }: { booking: Booking | nul
       bookingStatus: form.bookingStatus,
       currency: form.currency,
       confirmedAt: toISO(form.confirmedAt),
-      paymentLink: form.paymentLink || undefined,
+      paymentLink,
     });
     void computed;
   };
@@ -197,7 +210,19 @@ function BookingFormModal({ booking, onClose, onSave }: { booking: Booking | nul
         <Field label={t('book.bookingStatus')}><Select value={form.bookingStatus} onChange={(e) => setForm({ ...form, bookingStatus: e.target.value as BookingStatus })}>{BOOKING_STATUSES.map((s) => <option key={s} value={s}>{t(`book.${s.toLowerCase()}`)}</option>)}</Select></Field>
         <Field label={t('book.balanceDue')}><Input type="date" value={form.balanceDueDate} onChange={(e) => setForm({ ...form, balanceDueDate: e.target.value })} /></Field>
         <Field label={t('book.confirmedAt')}><Input type="date" value={form.confirmedAt} onChange={(e) => setForm({ ...form, confirmedAt: e.target.value })} /></Field>
-        <div className="sm:col-span-2"><Field label={t('book.paymentLink')}><Input value={form.paymentLink} onChange={(e) => setForm({ ...form, paymentLink: e.target.value })} placeholder="https://..." /></Field></div>
+        <div className="sm:col-span-2">
+          <Field label={t('book.paymentLink')}>
+            <Input
+              value={form.paymentLink}
+              onChange={(e) => {
+                setForm({ ...form, paymentLink: e.target.value });
+                setPaymentLinkError(null);
+              }}
+              placeholder="https://..."
+            />
+            {paymentLinkError && <p role="alert" className="mt-1 text-xs text-rose-600">{paymentLinkError}</p>}
+          </Field>
+        </div>
       </div>
     </Modal>
   );
