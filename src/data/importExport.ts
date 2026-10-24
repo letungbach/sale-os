@@ -72,12 +72,22 @@ export async function importData(json: unknown, opts: { replace?: boolean } = {}
   // Reference validation
   const leadIds = new Set(data.leads.map((l) => l.leadId));
   const packageIds = new Set(data.packages.map((p) => p.packageId));
+  const bookingIds = new Set(data.bookings.map((b) => b.bookingId));
+  const agentIds = new Set(data.agents.map((a) => a.agentId));
   for (const b of data.bookings) {
-    if (b.leadId && !leadIds.has(b.leadId)) errors.push(`Booking ${b.bookingId} references missing lead ${b.leadId}`);
+    if (!leadIds.has(b.leadId)) errors.push(`Booking ${b.bookingId} references missing lead ${b.leadId}`);
     if (b.packageId && !packageIds.has(b.packageId)) errors.push(`Booking ${b.bookingId} references missing package ${b.packageId}`);
   }
   for (const t of data.tasks) {
     if (t.leadId && !leadIds.has(t.leadId)) errors.push(`Task ${t.taskId} references missing lead ${t.leadId}`);
+    if (t.bookingId && !bookingIds.has(t.bookingId)) errors.push(`Task ${t.taskId} references missing booking ${t.bookingId}`);
+    if (!agentIds.has(t.agentId)) errors.push(`Task ${t.taskId} references missing agent ${t.agentId}`);
+  }
+  for (const l of data.leads) {
+    if (!agentIds.has(l.agentId)) errors.push(`Lead ${l.leadId} references missing agent ${l.agentId}`);
+  }
+  for (const s of data.settings) {
+    if (!agentIds.has(s.agentId)) errors.push(`Settings ${s.id} references missing agent ${s.agentId}`);
   }
 
   if (errors.length > 0) {
