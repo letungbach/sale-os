@@ -2457,11 +2457,6 @@ to commit before sending the next.
 
 ---
 
-End of plan. Good luck — the architecture is sound, the issues are localized, and
-each wave should land cleanly with the verifications above.
-
----
-
 ## Production Deployment — Cloudflare Workers
 
 **Target:** `https://os.letstravel.vn`  
@@ -2477,6 +2472,8 @@ started manually with `workflow_dispatch`.
   client-side routes, and binds the Worker to the `os.letstravel.vn` custom domain.
 - `.github/workflows/deploy-cloudflare.yml` runs install, type-check, lint, build,
   and `wrangler deploy` on pushes to `main`.
+- Wrangler is a locked development dependency so local dry-runs and CI deployments
+  use the same tool version.
 
 ### One-time setup
 
@@ -2515,3 +2512,8 @@ implemented.
       and a page reload on a nested route still renders the app.
 - [ ] Verify browser-local data persistence and clarify to users that it does not
       synchronize across devices.
+
+---
+
+End of plan. Good luck — the architecture is sound, the issues are localized, and
+each wave should land cleanly with the verifications above.
