@@ -2,7 +2,6 @@ import { db, newId, nowISO } from './db';
 import type {
   Agent,
   Booking,
-  DiscountAudit,
   GsdTask,
   Lead,
   Settings,
@@ -167,13 +166,3 @@ export const taskRepo = {
   },
 };
 
-export const discountAuditRepo = {
-  async all(): Promise<DiscountAudit[]> {
-    return db.discountAudits.toArray();
-  },
-  async create(a: Omit<DiscountAudit, 'id' | 'createdAt'>): Promise<DiscountAudit> {
-    const full: DiscountAudit = { ...a, id: newId('disc'), createdAt: nowISO() };
-    await db.discountAudits.put(full);
-    return full;
-  },
-};

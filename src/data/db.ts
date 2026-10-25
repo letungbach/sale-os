@@ -2,7 +2,6 @@ import Dexie, { type Table } from 'dexie';
 import type {
   Agent,
   Booking,
-  DiscountAudit,
   GsdTask,
   Lead,
   Settings,
@@ -16,7 +15,6 @@ export class SalesOSDatabase extends Dexie {
   bookings!: Table<Booking, string>;
   tasks!: Table<GsdTask, string>;
   settings!: Table<Settings, string>;
-  discountAudits!: Table<DiscountAudit, string>;
 
   constructor() {
     super('phucgia_salesos');
@@ -27,7 +25,6 @@ export class SalesOSDatabase extends Dexie {
       bookings: 'bookingId, leadId, packageId, bookingStatus, paymentStatus, currency, createdAt',
       tasks: 'taskId, agentId, leadId, bookingId, urgencyLevel, status, dueAt, createdAt',
       settings: 'id, agentId',
-      discountAudits: 'id, bookingId, leadId, createdAt',
     });
     this.version(2)
       .stores({
@@ -37,7 +34,6 @@ export class SalesOSDatabase extends Dexie {
         bookings: 'bookingId, leadId, packageId, bookingStatus, paymentStatus, currency, createdAt',
         tasks: 'taskId, agentId, leadId, bookingId, urgencyLevel, status, dueAt, createdAt',
         settings: 'id, agentId',
-        discountAudits: 'id, bookingId, leadId, createdAt',
       })
       .upgrade(async (tx) => {
         await tx.table('leads').toCollection().modify((lead) => {
@@ -45,6 +41,21 @@ export class SalesOSDatabase extends Dexie {
             lead.closedAt = lead.updatedAt;
           }
         });
+      });
+    this.version(3)
+      .stores({
+        agents: 'agentId, name, active',
+        leads: 'leadId, agentId, stage, destination, priorityScore, nextActionAt, createdAt, closedAt',
+        packages: 'packageId, destination, availabilityStatus, supplierCutoffAt',
+        bookings: 'bookingId, leadId, packageId, bookingStatus, paymentStatus, currency, createdAt',
+        tasks: 'taskId, agentId, leadId, bookingId, urgencyLevel, status, dueAt, createdAt',
+        settings: 'id, agentId',
+      })
+      .upgrade(async (tx) => {
+        const tableNames = tx.db.tables.map((table) => table.name);
+        if (tableNames.includes('discountAudits')) {
+          await tx.table('discountAudits').clear();
+        }
       });
   }
 }

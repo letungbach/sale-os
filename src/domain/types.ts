@@ -119,14 +119,3 @@ export interface Settings {
   updatedAt: string;
 }
 
-export interface DiscountAudit {
-  id: string;
-  bookingId?: string;
-  leadId?: string;
-  originalPrice: number;
-  discountPercent: number;
-  finalPrice: number;
-  reason: string;
-  approvedBy: string;
-  createdAt: string;
-}

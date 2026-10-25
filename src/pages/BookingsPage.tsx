@@ -7,6 +7,7 @@ import { generateItineraryPdf } from '@/integrations/pdf';
 import { Badge, Card, EmptyState, Field, Input, Select } from '@/components/Form';
 import { Button } from '@/components/Button';
 import { Modal, ConfirmDialog } from '@/components/Modal';
+import { useFlash } from '@/hooks/useFlash';
 
 const BOOKING_STATUSES: BookingStatus[] = ['Draft', 'Confirmed', 'Cancelled', 'Completed'];
 const PAYMENT_STATUSES: PaymentStatus[] = ['Unpaid', 'Partial', 'Paid', 'Refunded'];
@@ -38,14 +39,12 @@ export function BookingsPage() {
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [paymentBooking, setPaymentBooking] = useState<Booking | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, flash } = useFlash(2500);
 
   const sorted = useMemo(() => [...bookings].sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [bookings]);
 
   const leadFor = (id: string) => leads.find((l) => l.leadId === id);
   const pkgFor = (id?: string) => packages.find((p) => p.packageId === id);
-
-  const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   const downloadPdf = (b: Booking) => {
     const lead = leadFor(b.leadId);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Upload, RotateCcw, Cpu, Globe } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import type { Agent, Currency, Settings } from '@/domain/types';
@@ -9,6 +9,7 @@ import { webmcp } from '@/webmcp/adapter';
 import { Badge, Card, EmptyState, Field, Input, Select } from '@/components/Form';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/Modal';
+import { useFlash } from '@/hooks/useFlash';
 
 const CURRENCIES: Currency[] = ['VND', 'USD', 'KRW', 'JPY'];
 
@@ -16,7 +17,7 @@ export function SettingsPage() {
   const { agent, settings, setSettings, setAgent, i18n, refresh } = useApp();
   const t = i18n.t;
   const fileRef = useRef<HTMLInputElement>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, flash } = useFlash(3000);
   const [confirmReset, setConfirmReset] = useState(false);
   const [pendingImport, setPendingImport] = useState<File | null>(null);
   const [agentDraft, setAgentDraft] = useState<Agent>(agent ?? ({} as Agent));
@@ -49,11 +50,9 @@ export function SettingsPage() {
     };
   }, [settingsDraft, settings, setSettings]);
 
-  const detEngine = createEngine('deterministic');
-  const onnxEngine = createEngine('onnx');
-  const webmcpStatus = webmcp.status();
-
-  const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const detEngine = useMemo(() => createEngine('deterministic'), []);
+  const onnxEngine = useMemo(() => createEngine('onnx'), []);
+  const webmcpStatus = useMemo(() => webmcp.status(), []);
 
   if (!agent || !settings) {
     return <EmptyState title={t('common.loading')} />;

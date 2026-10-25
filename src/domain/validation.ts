@@ -107,18 +107,6 @@ export const settingsSchema = z.object({
   updatedAt: isoString,
 });
 
-export const discountAuditSchema = z.object({
-  id: idString,
-  bookingId: idString.optional(),
-  leadId: idString.optional(),
-  originalPrice: z.number().nonnegative(),
-  discountPercent: z.number().min(0).max(100),
-  finalPrice: z.number().nonnegative(),
-  reason: z.string().min(1),
-  approvedBy: z.string().min(1),
-  createdAt: isoString,
-});
-
 export const importSchema = z.object({
   version: z.number(),
   exportedAt: isoString,
@@ -128,5 +116,4 @@ export const importSchema = z.object({
   bookings: z.array(bookingSchema).optional().default([]),
   tasks: z.array(taskSchema).optional().default([]),
   settings: z.array(settingsSchema).optional().default([]),
-  discountAudits: z.array(discountAuditSchema).optional().default([]),
 });

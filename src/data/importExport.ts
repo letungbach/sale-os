@@ -10,18 +10,16 @@ export interface ExportBundle {
   bookings: unknown[];
   tasks: unknown[];
   settings: unknown[];
-  discountAudits: unknown[];
 }
 
 export async function exportData(): Promise<ExportBundle> {
-  const [agents, leads, packages, bookings, tasks, settings, discountAudits] = await Promise.all([
+  const [agents, leads, packages, bookings, tasks, settings] = await Promise.all([
     db.agents.toArray(),
     db.leads.toArray(),
     db.packages.toArray(),
     db.bookings.toArray(),
     db.tasks.toArray(),
     db.settings.toArray(),
-    db.discountAudits.toArray(),
   ]);
   return {
     version: 1,
@@ -32,7 +30,6 @@ export async function exportData(): Promise<ExportBundle> {
     bookings,
     tasks,
     settings,
-    discountAudits,
   };
 }
 
@@ -104,7 +101,6 @@ export async function importData(json: unknown, opts: { replace?: boolean } = {}
     await db.bookings.bulkPut(data.bookings as never);
     await db.tasks.bulkPut(data.tasks as never);
     await db.settings.bulkPut(data.settings as never);
-    await db.discountAudits.bulkPut(data.discountAudits as never);
   });
 
   return {
