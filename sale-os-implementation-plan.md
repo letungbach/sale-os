@@ -2459,3 +2459,59 @@ to commit before sending the next.
 
 End of plan. Good luck — the architecture is sound, the issues are localized, and
 each wave should land cleanly with the verifications above.
+
+---
+
+## Production Deployment — Cloudflare Workers
+
+**Target:** `https://os.letstravel.vn`  
+**Deployment:** GitHub Actions builds and deploys the Vite SPA to Cloudflare Workers
+with Static Assets whenever a commit is pushed to `main`; the workflow can also be
+started manually with `workflow_dispatch`.
+
+### Configuration added
+
+- `worker.js` serves the generated static assets and exposes `/health` for a basic
+  deployment check.
+- `wrangler.jsonc` points Workers Static Assets at `dist/`, enables SPA fallback for
+  client-side routes, and binds the Worker to the `os.letstravel.vn` custom domain.
+- `.github/workflows/deploy-cloudflare.yml` runs install, type-check, lint, build,
+  and `wrangler deploy` on pushes to `main`.
+
+### One-time setup
+
+1. Ensure `letstravel.vn` is an active zone in the Cloudflare account and that
+   `os.letstravel.vn` is available for a Workers custom domain. Cloudflare provisions
+   the DNS record and certificate when Wrangler creates the custom domain.
+2. Create a Cloudflare API token scoped to the target account with permission to
+   deploy Workers and their static assets, and permission to create/manage the
+   custom-domain DNS record for `letstravel.vn`. Restrict the token to the required
+   account and zone.
+3. In the GitHub repository settings, add Actions secrets:
+   - `CLOUDFLARE_API_TOKEN` — the scoped API token.
+   - `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account ID.
+4. Merge or push the deployment commit to `main`, or run
+   **Actions → Deploy to Cloudflare Workers → Run workflow**. After it succeeds,
+   check `https://os.letstravel.vn/health` for `ok` and open the application URL.
+
+Do not add Cloudflare credentials to source files, Wrangler configuration, or
+repository variables. A first deployment requires the two GitHub secrets; tokens
+do not need to be supplied in chat.
+
+### Data and hosting behavior
+
+This deploys the existing browser-based application; it does not migrate Dexie data
+to a server. Records remain in each user's browser IndexedDB and are not shared or
+automatically synchronized between browsers/devices. The production app remains
+dependent on browser-local persistence unless a separate backend/sync feature is
+implemented.
+
+### Deployment verification checklist
+
+- [ ] Configure the Cloudflare token and account ID as GitHub Actions secrets.
+- [ ] Confirm the custom domain is provisioned and HTTPS is active.
+- [ ] Confirm GitHub Actions passes type-check, lint, build, and Worker deployment.
+- [ ] Confirm `/health` returns `ok`, application routes load through SPA fallback,
+      and a page reload on a nested route still renders the app.
+- [ ] Verify browser-local data persistence and clarify to users that it does not
+      synchronize across devices.

@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sale-os",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-25",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "os.letstravel.vn",
+      "custom_domain": true
+    }
+  ]
+}
