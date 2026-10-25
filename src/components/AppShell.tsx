@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -20,6 +20,7 @@ import {
 import { useApp } from '@/store/AppContext';
 import type { Lang } from '@/i18n/dictionary';
 import { useDelayedUnmount } from '@/hooks/useDelayedUnmount';
+import { useDialog } from '@/hooks/useDialog';
 
 interface NavItem {
   key: string;
@@ -80,14 +81,12 @@ function BrandHeader({ tagline }: { tagline: string }) {
 function HeaderActions({
   i18n,
   themeMode,
-  effectiveTheme,
   setThemeMode,
   setLanguage,
   online,
 }: {
   i18n: ReturnType<typeof useApp>['i18n'];
   themeMode: ReturnType<typeof useApp>['themeMode'];
-  effectiveTheme: ReturnType<typeof useApp>['effectiveTheme'];
   setThemeMode: ReturnType<typeof useApp>['setThemeMode'];
   setLanguage: ReturnType<typeof useApp>['setLanguage'];
   online: boolean;
@@ -98,6 +97,8 @@ function HeaderActions({
     const idx = order.indexOf(themeMode);
     setThemeMode(order[(idx + 1) % order.length]);
   };
+
+  const ThemeIcon = themeMode === 'light' ? Sun : themeMode === 'dark' ? Moon : Monitor;
 
   return (
     <div className="flex items-center gap-1">
@@ -111,10 +112,11 @@ function HeaderActions({
       </button>
       <button
         onClick={cycleTheme}
-        aria-label={i18n.t('theme.toggle')}
+        aria-label={`${i18n.t('theme.toggle')}: ${i18n.t(`theme.mode.${themeMode}`)}`}
+        aria-pressed={themeMode === 'dark'}
         className="p-2 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
       >
-        {effectiveTheme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+        <ThemeIcon size={16} />
       </button>
       <div className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium ${
         online ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20'
@@ -127,10 +129,13 @@ function HeaderActions({
 }
 
 export function AppShell({ current, onNavigate, children }: Props) {
-  const { i18n, themeMode, effectiveTheme, setThemeMode, setLanguage, online, isDemo } = useApp();
+  const { i18n, themeMode, setThemeMode, setLanguage, online, isDemo } = useApp();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const t = i18n.t;
   const drawer = useDelayedUnmount(mobileNavOpen, 200);
+
+  useDialog({ open: drawer.shouldRender, onClose: () => setMobileNavOpen(false), panelRef: drawerRef });
 
   const navItems: NavItem[] = [
     { key: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -167,7 +172,13 @@ export function AppShell({ current, onNavigate, children }: Props) {
       {drawer.shouldRender && (
         <div className={`lg:hidden fixed inset-0 z-40 transition-opacity duration-200 ${drawer.isClosing ? 'opacity-0' : 'opacity-100'}`}>
           <div className="absolute inset-0 bg-slate-900/60" onClick={() => setMobileNavOpen(false)} />
-          <aside className={`absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 p-3 transition-transform duration-200 ${drawer.isClosing ? '-translate-x-full' : 'translate-x-0'}`}>
+          <aside
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('common.navigation')}
+            className={`absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 p-3 transition-transform duration-200 ${drawer.isClosing ? '-translate-x-full' : 'translate-x-0'}`}
+          >
             <div className="flex justify-end mb-2">
               <button onClick={() => setMobileNavOpen(false)} className="p-2 text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded-md" aria-label={t('common.close')}>
                 <X size={18} />
@@ -186,7 +197,7 @@ export function AppShell({ current, onNavigate, children }: Props) {
               <button
                 onClick={() => setMobileNavOpen(true)}
                 className="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded-md"
-                aria-label={t('common.close')}
+                aria-label={t('common.menu')}
               >
                 <Menu size={20} />
               </button>
@@ -198,7 +209,6 @@ export function AppShell({ current, onNavigate, children }: Props) {
             <HeaderActions
               i18n={i18n}
               themeMode={themeMode}
-              effectiveTheme={effectiveTheme}
               setThemeMode={setThemeMode}
               setLanguage={setLanguage}
               online={online}

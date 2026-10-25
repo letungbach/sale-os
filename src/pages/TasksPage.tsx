@@ -76,7 +76,12 @@ export function TasksPage({ initialTaskId, onConsumeTaskId }: Props) {
           {scored.length === 0 ? (
             <Card className="p-4"><EmptyState title={t('dash.noTasks')} /></Card>
           ) : (
-            scored.slice(0, 12).map((s) => <TaskRow key={s.task.taskId} s={s} leads={leads} bookings={bookings} currency={currency} lang={i18n.lang} t={t} onEdit={() => setEditing(s.task)} onComplete={async () => { await saveTask({ ...s.task, status: 'Completed', completedAt: new Date().toISOString() }); }} />)
+            <>
+              {scored.slice(0, 12).map((s) => <TaskRow key={s.task.taskId} s={s} leads={leads} bookings={bookings} currency={currency} lang={i18n.lang} t={t} onEdit={() => setEditing(s.task)} onComplete={async () => { await saveTask({ ...s.task, status: 'Completed', completedAt: new Date().toISOString() }); }} />)}
+              {scored.length > 12 && (
+                <p className="text-xs text-slate-500 mt-2">{t('task.showing')} 12 / {scored.length}. {t('task.refineFilters')}</p>
+              )}
+            </>
           )}
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide pt-2">{t('task.completed')} / {t('task.deferred')}</h3>
           {allTasks.filter((x) => x.status !== 'Open').length === 0 ? (
@@ -94,8 +99,8 @@ export function TasksPage({ initialTaskId, onConsumeTaskId }: Props) {
                     <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(task.estimatedValue, currency, i18n.lang)} · {task.estimatedMinutes}{t('common.minutes')}</p>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(task)}><Pencil size={14} /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(task.taskId)}><Trash2 size={14} /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(task)} aria-label={t('common.edit')}><Pencil size={14} /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(task.taskId)} aria-label={t('common.delete')}><Trash2 size={14} /></Button>
                   </div>
                 </div>
               </Card>
@@ -224,7 +229,11 @@ function TaskFormModal({ task, onClose, onSave }: { task: GsdTask | null; onClos
         <Field label={t('task.dueAt')}><Input type="datetime-local" value={form.dueAt} onChange={(e) => setForm({ ...form, dueAt: e.target.value })} /></Field>
         <Field label={t('task.status')}><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TaskStatus })}>{STATUSES.map((s) => <option key={s} value={s}>{t(`task.${s.toLowerCase()}`)}</option>)}</Select></Field>
         <Field label={t('task.associatedLead')}><Select value={form.leadId} onChange={(e) => setForm({ ...form, leadId: e.target.value })}><option value="">—</option>{leads.map((l) => <option key={l.leadId} value={l.leadId}>{l.clientName}</option>)}</Select></Field>
-        <Field label={t('task.associatedBooking')}><Select value={form.bookingId} onChange={(e) => setForm({ ...form, bookingId: e.target.value })}><option value="">—</option>{bookings.map((b) => <option key={b.bookingId} value={b.bookingId}>{b.bookingId}</option>)}</Select></Field>
+        <Field label={t('task.associatedBooking')}><Select value={form.bookingId} onChange={(e) => setForm({ ...form, bookingId: e.target.value })}><option value="">—</option>{bookings.map((b) => {
+          const bookingLead = leads.find((lead) => lead.leadId === b.leadId);
+          const label = bookingLead ? `${bookingLead.clientName} · ${formatCurrency(b.totalAmount, b.currency, i18n.lang)}` : `${b.bookingId}`;
+          return <option key={b.bookingId} value={b.bookingId}>{label}</option>;
+        })}</Select></Field>
       </div>
     </Modal>
   );

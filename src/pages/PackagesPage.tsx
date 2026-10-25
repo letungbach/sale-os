@@ -68,8 +68,8 @@ export function PackagesPage() {
                   )}
                 </div>
                 <div className="flex gap-1 mt-1">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil size={14} /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(p.packageId)}><Trash2 size={14} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)} aria-label={t('common.edit')}><Pencil size={14} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(p.packageId)} aria-label={t('common.delete')}><Trash2 size={14} /></Button>
                 </div>
               </Card>
             );

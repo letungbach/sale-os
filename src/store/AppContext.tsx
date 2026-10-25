@@ -10,7 +10,6 @@ import {
 import type {
   Agent,
   Booking,
-  Currency,
   GsdTask,
   Lead,
   Settings,

@@ -1,8 +1,9 @@
-import { type ReactNode, useEffect, useId, useRef } from 'react';
+import { type ReactNode, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 import { useDelayedUnmount } from '@/hooks/useDelayedUnmount';
+import { useDialog } from '@/hooks/useDialog';
 
 interface Props {
   open: boolean;
@@ -22,69 +23,10 @@ const sizeClasses = {
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const previouslyFocused = useRef<HTMLElement | null>(null);
-  const onCloseRef = useRef(onClose);
   const titleId = useId();
   const { shouldRender, isClosing } = useDelayedUnmount(open, 180);
 
-  onCloseRef.current = onClose;
-
-  useEffect(() => {
-    if (!shouldRender) return;
-
-    previouslyFocused.current = document.activeElement as HTMLElement | null;
-
-    const panel = panelRef.current;
-    if (panel) {
-      const focusable = panel.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      focusable?.focus();
-    }
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCloseRef.current();
-        return;
-      }
-      if (e.key !== 'Tab' || !panelRef.current) return;
-      const focusables = panelRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', onKey);
-
-    const prevOverflow = document.body.style.overflow;
-    const prevPosition = document.body.style.position;
-    const prevTop = document.body.style.top;
-    const prevWidth = document.body.style.width;
-    const scrollY = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      document.body.style.position = prevPosition;
-      document.body.style.top = prevTop;
-      document.body.style.width = prevWidth;
-      window.scrollTo(0, scrollY);
-      previouslyFocused.current?.focus();
-    };
-  }, [shouldRender]);
+  useDialog({ open: shouldRender, onClose, panelRef });
 
   if (!shouldRender) return null;
 

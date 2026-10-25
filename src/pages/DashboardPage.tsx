@@ -211,6 +211,11 @@ export function DashboardPage({ onNavigate, onOpenTask }: Props) {
             ) : (
               <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
                 {filtered.slice(0, 12).map((s) => <TaskRow key={s.task.taskId} s={s} />)}
+                {filtered.length > 12 && (
+                  <Button variant="ghost" size="sm" onClick={() => onNavigate('tasks')} className="mt-2">
+                    {t('common.showAll')} ({filtered.length})
+                  </Button>
+                )}
               </div>
             )}
           </Card>
@@ -226,7 +231,7 @@ export function DashboardPage({ onNavigate, onOpenTask }: Props) {
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={pipelineData} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-                  <XAxis dataKey="stage" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                  <XAxis dataKey="stage" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={50} interval={0} stroke="#94a3b8" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
                   <Tooltip
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
